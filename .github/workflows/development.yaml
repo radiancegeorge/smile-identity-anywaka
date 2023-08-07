@@ -1,0 +1,42 @@
+name: Build and Deploy
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout master
+        uses: actions/checkout@v2
+
+      - name: Build container image
+        run: docker build -t radianceobi/anywork-smile-identity-kyc-fe:${{ github.sha }} .
+
+      - name: Docker Login
+        uses: docker/login-action@v2.1.0
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_ACCESS_TOKEN }}
+
+      - name: Push image to Docker Hub
+        run: docker push radianceobi/anywork-smile-identity-kyc-fe:${{ github.sha }}
+
+      - name: install doctl
+        uses: digitalocean/action-doctl@v2.3.0
+        with:
+          token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
+
+      - name: Save DigitalOcean kubeconfig
+        run: doctl kubernetes cluster kubeconfig save backend
+
+      - name: Edit and apply k8s deployment config
+        run: |
+          cat k8s/prod/deployment.yaml | sed 's|{{ github.sha }}|'"${{ github.sha }}"'|' | kubectl apply -f -
+
+      - name: apply/update general configurations
+        run: kubectl apply -f k8s
+
+      - name: Checking deployment status
+        run: kubectl rollout status deployment/smile-identity-kyc

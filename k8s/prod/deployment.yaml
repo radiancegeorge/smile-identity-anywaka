@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: smile-identity-kyc
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: smile-identity-kyc
+  template:
+    metadata:
+      labels:
+        app: smile-identity-kyc
+    spec:
+      containers:
+        - name: smile-identity-kyc-fe
+          image: radianceobi/anywork-smile-identity-kyc-fe:{{ github.sha }}
+          ports:
+            - containerPort: 80
+          resources:
+            limits:
+              memory: "100Mi"
+              cpu: "50m"

@@ -1,0 +1,35 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: anywork-smile-identity-kyc
+  annotations:
+    cert-manager.io/cluster-issuer: cert-manager
+    # nginx.ingress.kubernetes.io/proxy-body-size: 20m
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - "www.anywaka.org"
+        - "anywaka.org"
+      secretName: smile-identity-kyc-anywaka-tls
+  rules:
+    - host: anywaka.org
+      http:
+        paths:
+          - pathType: Prefix
+            path: "/"
+            backend:
+              service:
+                name: smile-identity-kyc-fe
+                port:
+                  number: 80
+    - host: www.anywaka.org
+      http:
+        paths:
+          - pathType: Prefix
+            path: "/"
+            backend:
+              service:
+                name: smile-identity-kyc-fe
+                port:
+                  number: 80
